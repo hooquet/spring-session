@@ -218,6 +218,30 @@ class JdbcIndexedSessionRepositoryTests {
 	}
 
 	@Test
+	void setDeleteSessionAttributeBySessionIdQueryNull() {
+		assertThatIllegalArgumentException().isThrownBy(() -> this.repository.setDeleteSessionAttributeBySessionIdQuery(null))
+				.withMessage("Query must not be empty");
+	}
+
+	@Test
+	void setDeleteSessionAttributeBySessionIdQueryEmpty() {
+		assertThatIllegalArgumentException().isThrownBy(() -> this.repository.setDeleteSessionAttributeBySessionIdQuery(" "))
+				.withMessage("Query must not be empty");
+	}
+
+	@Test
+	void setDeleteSessionAttributeByExpiryTimeQueryNull() {
+		assertThatIllegalArgumentException().isThrownBy(() -> this.repository.setDeleteSessionAttributeByExpiryTimeQuery(null))
+				.withMessage("Query must not be empty");
+	}
+
+	@Test
+	void setDeleteSessionAttributeByExpiryTimeQueryEmpty() {
+		assertThatIllegalArgumentException().isThrownBy(() -> this.repository.setDeleteSessionAttributeByExpiryTimeQuery(" "))
+				.withMessage("Query must not be empty");
+	}
+
+	@Test
 	void setLobHandlerNull() {
 		assertThatIllegalArgumentException().isThrownBy(() -> this.repository.setLobHandler(null))
 				.withMessage("LobHandler must not be null");
@@ -523,7 +547,7 @@ class JdbcIndexedSessionRepositoryTests {
 		assertThat(session).isNull();
 		verify(this.jdbcOperations, times(1)).query(isA(String.class), isA(PreparedStatementSetter.class),
 				isA(ResultSetExtractor.class));
-		verify(this.jdbcOperations, times(1)).update(startsWith("DELETE"), eq(expired.getId()));
+		verify(this.jdbcOperations, times(2)).update(startsWith("DELETE"), eq(expired.getId()));
 	}
 
 	@Test
@@ -549,7 +573,7 @@ class JdbcIndexedSessionRepositoryTests {
 
 		this.repository.deleteById(sessionId);
 
-		verify(this.jdbcOperations, times(1)).update(startsWith("DELETE"), eq(sessionId));
+		verify(this.jdbcOperations, times(2)).update(startsWith("DELETE"), eq(sessionId));
 	}
 
 	@Test
@@ -605,7 +629,7 @@ class JdbcIndexedSessionRepositoryTests {
 	void cleanupExpiredSessions() {
 		this.repository.cleanUpExpiredSessions();
 
-		verify(this.jdbcOperations, times(1)).update(startsWith("DELETE"), anyLong());
+		verify(this.jdbcOperations, times(2)).update(startsWith("DELETE"), anyLong());
 	}
 
 	@Test // gh-1120
