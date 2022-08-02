@@ -203,6 +203,25 @@ public class JdbcIndexedSessionRepository
 			+ "WHERE EXPIRY_TIME < ?";
 	// @formatter:on
 
+	// @formatter:off
+	private static final String DELETE_SESSION_ATTRIBUTE_BY_SESSION_ID_QUERY = ""
+			+ "DELETE FROM %TABLE_NAME%_ATTRIBUTES "
+			+ "WHERE SESSION_PRIMARY_ID in ("
+			+ " SELECT PRIMARY_ID FROM %TABLE_NAME%"
+			+ " WHERE SESSION_ID = ? "
+			+ " AND MAX_INACTIVE_INTERVAL >= 0"
+			+ ")";
+	// @formatter:on
+
+	// @formatter:off
+	private static final String DELETE_SESSION_ATTRIBUTE_BY_EXPIRY_TIME_QUERY = ""
+			+ "DELETE FROM %TABLE_NAME%_ATTRIBUTES "
+			+ "WHERE SESSION_PRIMARY_ID in ("
+			+ " SELECT PRIMARY_ID FROM %TABLE_NAME%"
+			+ " WHERE EXPIRY_TIME < ?"
+			+ ")";
+	// @formatter:on
+
 	private static final Log logger = LogFactory.getLog(JdbcIndexedSessionRepository.class);
 
 	private final JdbcOperations jdbcOperations;
@@ -233,6 +252,10 @@ public class JdbcIndexedSessionRepository
 	private String listSessionsByPrincipalNameQuery;
 
 	private String deleteSessionsByExpiryTimeQuery;
+
+	private String deleteSessionAttributeBySessionIdQuery;
+
+	private String deleteSessionAttributeByExpiryTimeQuery;
 
 	/**
 	 * If non-null, this value is used to override the default value for
@@ -355,6 +378,16 @@ public class JdbcIndexedSessionRepository
 		this.deleteSessionsByExpiryTimeQuery = getQuery(deleteSessionsByExpiryTimeQuery);
 	}
 
+	public void setDeleteSessionAttributeBySessionIdQuery(String deleteSessionAttributeBySessionIdQuery) {
+		Assert.hasText(deleteSessionAttributeBySessionIdQuery, "Query must not be empty");
+		this.deleteSessionAttributeBySessionIdQuery = getQuery(deleteSessionAttributeBySessionIdQuery);
+	}
+
+	public void setDeleteSessionAttributeByExpiryTimeQuery(String deleteSessionAttributeByExpiryTimeQuery) {
+		Assert.hasText(deleteSessionAttributeByExpiryTimeQuery, "Query must not be empty");
+		this.deleteSessionAttributeByExpiryTimeQuery = getQuery(deleteSessionAttributeByExpiryTimeQuery);
+	}
+
 	/**
 	 * Set the maximum inactive interval in seconds between requests before newly created
 	 * sessions will be invalidated. A negative time indicates that the session will never
@@ -447,8 +480,12 @@ public class JdbcIndexedSessionRepository
 
 	@Override
 	public void deleteById(final String id) {
-		this.transactionOperations.executeWithoutResult((status) -> JdbcIndexedSessionRepository.this.jdbcOperations
-				.update(JdbcIndexedSessionRepository.this.deleteSessionQuery, id));
+		this.transactionOperations.executeWithoutResult((status) -> {
+			JdbcIndexedSessionRepository.this.jdbcOperations
+					.update(JdbcIndexedSessionRepository.this.deleteSessionAttributeBySessionIdQuery, id);
+			JdbcIndexedSessionRepository.this.jdbcOperations
+					.update(JdbcIndexedSessionRepository.this.deleteSessionQuery, id);
+		});
 	}
 
 	@Override
@@ -584,8 +621,13 @@ public class JdbcIndexedSessionRepository
 
 	public void cleanUpExpiredSessions() {
 		Integer deletedCount = this.transactionOperations
-				.execute((status) -> JdbcIndexedSessionRepository.this.jdbcOperations.update(
-						JdbcIndexedSessionRepository.this.deleteSessionsByExpiryTimeQuery, System.currentTimeMillis()));
+				.execute((status) -> {
+					long currentTimeMillis = System.currentTimeMillis();
+					JdbcIndexedSessionRepository.this.jdbcOperations.update(
+							JdbcIndexedSessionRepository.this.deleteSessionAttributeByExpiryTimeQuery, currentTimeMillis);
+					return JdbcIndexedSessionRepository.this.jdbcOperations.update(
+							JdbcIndexedSessionRepository.this.deleteSessionsByExpiryTimeQuery, currentTimeMillis);
+				});
 
 		if (logger.isDebugEnabled()) {
 			logger.debug("Cleaned up " + deletedCount + " expired sessions");
@@ -613,6 +655,9 @@ public class JdbcIndexedSessionRepository
 		this.deleteSessionQuery = getQuery(DELETE_SESSION_QUERY);
 		this.listSessionsByPrincipalNameQuery = getQuery(LIST_SESSIONS_BY_PRINCIPAL_NAME_QUERY);
 		this.deleteSessionsByExpiryTimeQuery = getQuery(DELETE_SESSIONS_BY_EXPIRY_TIME_QUERY);
+		this.deleteSessionAttributeBySessionIdQuery = getQuery(DELETE_SESSION_ATTRIBUTE_BY_SESSION_ID_QUERY);
+		this.deleteSessionAttributeByExpiryTimeQuery = getQuery(DELETE_SESSION_ATTRIBUTE_BY_EXPIRY_TIME_QUERY);
+
 	}
 
 	private LobHandler getLobHandler() {
