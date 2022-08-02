@@ -219,25 +219,29 @@ class JdbcIndexedSessionRepositoryTests {
 
 	@Test
 	void setDeleteSessionAttributeBySessionIdQueryNull() {
-		assertThatIllegalArgumentException().isThrownBy(() -> this.repository.setDeleteSessionAttributeBySessionIdQuery(null))
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> this.repository.setDeleteSessionAttributeBySessionIdQuery(null))
 				.withMessage("Query must not be empty");
 	}
 
 	@Test
 	void setDeleteSessionAttributeBySessionIdQueryEmpty() {
-		assertThatIllegalArgumentException().isThrownBy(() -> this.repository.setDeleteSessionAttributeBySessionIdQuery(" "))
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> this.repository.setDeleteSessionAttributeBySessionIdQuery(" "))
 				.withMessage("Query must not be empty");
 	}
 
 	@Test
 	void setDeleteSessionAttributeByExpiryTimeQueryNull() {
-		assertThatIllegalArgumentException().isThrownBy(() -> this.repository.setDeleteSessionAttributeByExpiryTimeQuery(null))
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> this.repository.setDeleteSessionAttributeByExpiryTimeQuery(null))
 				.withMessage("Query must not be empty");
 	}
 
 	@Test
 	void setDeleteSessionAttributeByExpiryTimeQueryEmpty() {
-		assertThatIllegalArgumentException().isThrownBy(() -> this.repository.setDeleteSessionAttributeByExpiryTimeQuery(" "))
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> this.repository.setDeleteSessionAttributeByExpiryTimeQuery(" "))
 				.withMessage("Query must not be empty");
 	}
 
