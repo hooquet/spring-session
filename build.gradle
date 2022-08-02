@@ -61,8 +61,8 @@ configure(subprojects) {project -> {
 				url = release_url
 				name = 'kyligence'
 				credentials {
-					username 'admin'
-					password 'Kyligence@2016'
+					username 'kyligence'
+					password 'Kyligence@2022'
 				}
 			}
 		}
