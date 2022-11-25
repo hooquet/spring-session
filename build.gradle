@@ -60,10 +60,12 @@ configure(subprojects) {project -> {
 			maven {
 				url = release_url
 				name = 'kyligence'
-				credentials {
-					username 'kyligence'
-					password 'Kyligence@2022'
-				}
+                if (project.hasProperty('kyligenceRepoUsername')) {
+                    credentials {
+                        username "$kyligenceRepoUsername"
+                        password "$kyligenceRepoPassword"
+                    }
+                }
 			}
 		}
 	}
